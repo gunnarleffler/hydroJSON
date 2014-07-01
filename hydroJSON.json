@@ -1,0 +1,51 @@
+{
+    "STATION1": {
+        "description": "string",
+        "responsibility": "code or description of responsible office/database",
+        "coordinates": {
+            "latitude": "float",
+            "longitude": "float",
+            "datum": "string"
+        },
+        "HUC": "Numeric HUC Code",
+        "elevation": {
+            "value": "float",
+            "accuracy": "float",
+            "method": "full            explanation"
+        },
+        "timezone": "US/Pacific full",
+        "time_format": "strftime/ISO-8601",
+        "TS_ID1": {
+            "values": [
+                [
+                    "TIMESTAMP",
+                    "VALUE"
+                ],
+                [
+                    "TIMESTAMP",
+                    "VALUE"
+                ]
+            ],
+            "quality": [
+                [
+                    "TIMESTAMP",
+                    "VALUE"
+                ],
+                [
+                    "TIMESTAMP",
+                    "VALUE"
+                ]
+            ],
+            "hash": "", //This was suggested by a modeler to easily compare if a dataset has already been seen
+            "parameter": "",
+            "duration": "",
+            "interval": "", //nominal frequency
+            "units": "",
+            "count": "integer",
+            "min_value": "float", //Should these be a timeslice e.g. [timestamp,value]? 
+            "max_value": "float", //Should these be a timeslice e.g. [timestamp,value]?
+            "start_timestamp": "TIMESTAMP",
+            "end_timestamp": "TIMESTAMP"
+        }
+    }
+}
