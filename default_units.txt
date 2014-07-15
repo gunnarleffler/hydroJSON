@@ -1,0 +1,98 @@
+Name	Abbr	Family	Measures
+acre feet	acre*ft	English	volume
+acres	acre	English	area
+atmospheres	atm	Metric	pressure
+bars	bar	Metric	pressure
+british thermal unit	btu	English	energy
+Calories	cal	English	energy
+centimeters	cM	Metric	length
+centimeters per second	cM/s	Metric	speed
+counts	count	univ	count
+cubic centimeter	cc	Metric	volume
+cubic feet	ft^3	English	volume
+cubic feet per second	cfs	English	flow
+cubic feet per second	ft^3/s	English	flow
+cubic inches	in^3	English	volume
+cubic meter	m^3	Metric	volume
+cubic meters per second	m^3/s	Metric	flow
+days	day	univ	time
+degrees Celsius	degC	Metric	temperature
+degrees Fahrenheit	degF	English	temperature
+degrees Kelvin	degK	Metric	temperature
+dyn	dyn	Metric	force
+ergs	erg	English	energy
+feet	ft	English	length
+feet per second	ft/s	English	speed
+fluid ounce	floz	English	volume
+foot-pounds per second	ft*lbf/s	English	power
+gallon	gal	English	volume
+grams	G	Metric	mass
+grams per liter	g/L	Metric	concentration
+horsepower	hp	English	power
+hours	hr	univ	time
+inches	in	English	length
+inches of mercury	inHg	English	pressure
+inches per second	in/s	English	speed
+joules	j	Metric	energy
+Kilocalories	kcal	English	energy
+kilograms	kG	Metric	mass
+kilojoules	kj	Metric	energy
+kiloliter	kL	Metric	volume
+kilometers	kM	Metric	length
+kilometers per hour	kM/hr	Metric	speed
+kilopascals	kpa	Metric	pressure
+kilowatts	kW	Metric	power
+liter	L	Metric	volume
+meters	M	Metric	length
+meters per second	M/s	Metric	speed
+Metric ton	mt	Metric	mass
+micrograms	uG	Metric	mass
+micrograms per liter	uG/L	Metric	concentration
+microliter	uL	Metric	volume
+micrometers	uM	Metric	length
+MicroMHOs per centimeter	uMHOs/cm	metric	conductance
+MicroMHOs per centimeter	uMHO	metric	conductance
+MicroMHOs per centimeter	uMHOs	metric	conductance
+miles	mi	English	length
+miles per hour	mi/hr	English	speed
+miles per hour	mph	English	speed
+millibars	mbar	Metric	pressure
+milligrams	mG	Metric	mass
+milligrams per liter	mG/L	Metric	concentration
+milliliter	mL	Metric	volume
+millimeters	mM	Metric	length
+millimeters of mercury	mmHg	Metric	pressure
+millimeters per second	mM/s	Metric	speed
+minutes	min	univ	time
+nautical miles	nmi	English	length
+nautical miles per hour	nmi/hr	English	speed
+nautical miles per hour	knots	Metric	speed
+newtons	N	Metric	force
+ounces	oz	English	mass
+parts per million	ppm	univ	ratio
+parts per thousand	ppt	univ	ratio
+pascals	pa	Metric	pressure
+percent	pct	univ	ratio
+percent	%	univ	ratio
+pH	pH	univ	acidity
+pint	pt	English	volume
+pound-force	lbf	English	force
+pounds	lb	English	mass
+pounds per square inch	psi	English	pressure
+quart	qt	English	volume
+second	sec	univ	time
+square centimeters	cM^2	Metric	area
+square feet	ft^2	English	area
+square inches	in^2	English	area
+square kilometers	kM^2	Metric	area
+square meters	M^2	Metric	area
+square miles	mi^2	English	area
+square millimeters	mM^2	Metric	area
+square yards	yd^2	English	area
+tons	ton	English	mass
+volts	V	Metric	emf
+watts	W	Metric	power
+weeks	week	univ	time
+yards	yd	English	length
+yards per second	yd/s	English	speed
+
