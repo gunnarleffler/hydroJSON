@@ -17,8 +17,8 @@
         "timezone": "string, full name US/Pacific",
         "tz_offset": "string, -08:00 like the tail end of the ISO-8601", //optional
         "time_format": "strftime/ISO-8601",
-        "active_flag": "T",
-        "location_type": "string", //API Call in CWMSdd
+        "active_flag": "character T/F",
+        "location_type": "string e.g. Reservoir or streamgage", //API Call in CWMSdd
         "timeseries":{
           "TS_ID1": {
            "values": [
@@ -43,15 +43,15 @@
                     "VALUE"
                 ]
             ],
-            "hash": "string md5", 
+            "hash": "string md5", //hash of the timeseries, optional 
             "quality_type": "string",
             "parameter": "",
             "duration": "",
             "interval": "", //nominal frequency
             "units": "",
-            "count": "integer",
-            "min_value": "float", //Should these be a timeslice e.g. [timestamp,value]? 
-            "max_value": "float", //Should these be a timeslice e.g. [timestamp,value]?
+            "count": "integer", //count of values in the timeseries
+            "min_value": "float", //a timeslice e.g. [timestamp,value] 
+            "max_value": "float", //a timeslice e.g. [timestamp,value]
             "start_timestamp": "TIMESTAMP",
             "end_timestamp": "TIMESTAMP"
           }
