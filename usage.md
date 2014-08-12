@@ -25,18 +25,26 @@ Request Specification
   "query" : {"Stations":["BON","12340000","BIGI"], "Parameters":["Flow","03065","QD"]}
 }
 
-Discussion of Timeseries, units, interval 
----
+Timeseries Query
+--
 getjson?timeseries=[["CHJ Q","cfs","Daily"], ["CHJ.Flow.Inst.1Day.0.CBT-REV","kcfs"], ["12437990 00060","cfs"]]
-units and interval are optional parameters
-TODO: Define interval and duration
-TODO: Include specification for default units, DECODES spec will be used as an inital cut (Ktarbet)
 
-USBR Strawman
----
-GET /hydro/sites?interval=daily    # just get site meta-data for all sites with 'daily' data
-GET /hydro/series/daily?sites=boii,bigi,13206000&t1=2014-07-1&t2=2014-07-02     # two days of data
-GET /hydro/series/daily/13206000
+General Abstract Query
+--
+General abstract queries allow the end user to provide keywords. The service will return hydroJSON timeseries objects with the data they want.
+
+getjson?query=[["CHJ Daily Avg Flow"]]
+
+Catalog Query
+--
+getjson?catalog=[["CHJ Daily Avg Flow"]]
+
+Most Recent Value Query
+--
+getjson?mostrecent=[["12437990",  "cfs"]]
+
+units and interval are optional parameters
+TODO: Include specification for default units, DECODES spec will be used as an inital cut (Ktarbet)
 
 Default Units
 ---

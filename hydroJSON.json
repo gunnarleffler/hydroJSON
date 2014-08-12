@@ -46,7 +46,7 @@
             "hash": "string md5", //hash of the timeseries, optional 
             "quality_type": "string",
             "parameter": "",
-            "duration": "",
+            "duration": "", //interval over which the duration applies
             "interval": "", //nominal frequency
             "units": "",
             "count": "integer", //count of values in the timeseries
