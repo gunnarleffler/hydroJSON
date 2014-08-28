@@ -1,24 +1,24 @@
 {
-    "SITE1": {//AKA Location ID sitecatalog.siteid
-        "name": "string", sitecatalog.description
-        "responsibility": "code or description of responsible office/database", sitecatalog.responibility
+    "STATION1": {//AKA Location ID
+        "name": "string",
+        "responsibility": "code or description of responsible office/database",
         "coordinates": {
-            "latitude": "float", sitecatalog.latitude
-            "longitude": "float", sitecatalog.longitude
-            "datum": "string" sitecatalog.horizontal_datum
+            "latitude": "float",
+            "longitude": "float",
+            "datum": "string"
         },
         "HUC": "Numeric HUC Code",
         "elevation": {
-            "value": "float", sitecatalog.elevation
-            "accuracy": "float", sitecatalog.vertical_accuracy default 0 if not known
-            "datum": "string", isitecatalog.vertical_datum
-            "method": "string (full explanation)" sitecatalog.elevation_method
+            "value": "float",
+            "accuracy": "float",
+            "datum": "string",
+            "method": "string (full explanation)"
         },
-        "timezone": "string, full name US/Pacific", sitecatalog.timezone
-        "tz_offset": "string, -08:00 like the tail end of the ISO-8601", //optional sitecatalog.tz_offset
-        "time_format": "strftime/ISO-8601", //OTF default is ISO-8601, otherwise report what was requested
-        "active_flag": "character T/F", //sitecatalog.active_flag
-        "location_type": "string e.g. Reservoir or streamgage", //API Call in CWMSdd sitecatalog.type
+        "timezone": "string, full name US/Pacific",
+        "tz_offset": "string, -08:00 like the tail end of the ISO-8601", //optional
+        "time_format": "strftime/ISO-8601",
+        "active_flag": "character T/F",
+        "location_type": "string e.g. Reservoir or streamgage", //API Call in CWMSdd
         "timeseries":{
           "TS_ID1": {
            "values": [
@@ -43,13 +43,12 @@
                     "VALUE"
                 ]
             ],
-            "sigfig" : "integer",
             "hash": "string md5", //hash of the timeseries, optional 
             "quality_type": "string",
             "parameter": "",
             "duration": "", //interval over which the duration applies
             "interval": "", //nominal frequency
-            "units": "", seriescatalog.units
+            "units": "",
             "count": "integer", //count of values in the timeseries
             "min_value": "float", //a timeslice e.g. [timestamp,value] 
             "max_value": "float", //a timeslice e.g. [timestamp,value]
