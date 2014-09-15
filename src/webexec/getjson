@@ -1,0 +1,114 @@
+#!/usr/local/bin/python
+import sys,os,json,csv,cgi,urllib,datetime,cgitb;cgitb.enable()
+import dateutil.parser
+import hydro_lib
+print "Content-Type: text/plain\n\n"
+
+config ={"startdt":datetime.datetime.now()-datetime.timedelta(days=1),
+"enddt":datetime.datetime.now(),
+"forward":"0d",
+"backward":"1d",
+"time_format": "%Y-%m-%dT%H:%M:%S%z"
+}
+
+def complain (e):
+  print '{\n"error":"'+e+'"\n}'
+
+#-----------------------------------------------
+# catalog 
+#-----------------------------------------------
+
+def site_catalog(search_criteria):
+   output = {}
+   tokens = []
+   try:
+     tokens = json.loads(urllib.unquote(search_criteria))
+   except:
+     complain ("Malformed query")
+     return
+   if tokens == []: tokens = "['%']"
+   r = hydro_lib.rec([],table="sitecatalog",keys=hydro_lib.schemas["sitecatalog"])
+   for token in tokens:
+     t = r.search(hydro_lib.cur, "siteid", token)
+     for key in t:
+       output [key] = hydro_lib.new_site(t[key])
+   print json.dumps(output,sort_keys= True,indent=3)
+
+def ts_catalog(search_criteria):
+   '''This builds out a response consisting of sites and timeseries names'''
+   output = {}
+   tokens = []
+   try:
+     tokens = json.loads(urllib.unquote(search_criteria))
+   except:
+     complain ("Malformed query")
+     return output
+   if tokens == []: tokens = "['%']"
+   site = hydro_lib.rec([],table="sitecatalog",keys=hydro_lib.schemas["sitecatalog"])
+   series = hydro_lib.rec([],table="seriescatalog",keys=hydro_lib.schemas["seriescatalog"])
+   for token in tokens: #loop through search criteria tokens and build response
+     token = token.replace(" ","%")
+     t = series.search(hydro_lib.cur, "name", "%"+token+"%")
+     for key in t:
+       siteid = t[key]["siteid"]
+       if siteid in output:
+         output [siteid]["timeseries"][key] = {}
+       else:
+         s = site.get(hydro_lib.cur,"siteid",siteid)
+         output [siteid] = hydro_lib.new_site(s)
+         output [siteid]["timeseries"][key] = {}
+   return output   
+
+def query (search_criteria):
+  output = ts_catalog (search_criteria)
+  series = hydro_lib.rec([],table="seriescatalog",keys=hydro_lib.schemas["seriescatalog"])
+  for siteid in output:
+    for tsid in output[siteid]["timeseries"]:
+      s = series.get(hydro_lib.cur,"name",tsid)
+      ts = hydro_lib.readTS(s["tablename"],config["startdt"],config["enddt"])
+      if len(ts.data) > 0:
+        output[siteid]["timeseries"][tsid]= hydro_lib.new_timeseries(s,ts,time_format=config["time_format"])
+  print json.dumps(output,sort_keys= True,indent=3)
+
+#---------------------------------------------
+# Parse Command-line Options
+#---------------------------------------------
+
+def parseCommandLine(form):
+  """ This method takes a form object and adjusts default setting based on what are passed as url parameters.
+      The scheme for look forwards and look backwards are referenced the end date which can be specified.
+      "enddt" is the endtime and defaults to now(), you can set it using any (valid) time format you wish
+      "startdt" is the starttime and defaults to now()-1d, you can set it using any (valid) time format you wish
+      "backward" is the lookback time from the end date, it modifies the startdate (format:1w2d3h4m)
+      "forward" is the lookforward time from the end date, it modifies the end date after you manually set it.
+      forward has the same formatting as "backward".
+      "time_format" - change how the response date is formatted, using strftime formatting.
+  """
+  global config
+  ts=hydro_lib.timeSeries()
+  if "startdt" in form:
+    config["startdt"] = dateutil.parser.parse(form["startdt"].value)
+  if "enddt" in form:
+    config["enddt"] = dateutil.parsedateutil.parser.parse(form["enddt"].value)
+  if "backward" in form:
+    config["startdt"] = config["enddt"]- ts.parseTimedelta(form["backward"].value)
+  if "forward" in form:
+    config["enddt"] = config["enddt"]+ ts.parseTimedelta(form["forward"].value)
+  if form.has_key("time_format"):
+    config["time_format"] = form["time_format"].value
+
+#---------------------------------------------
+# "static void main();"
+#---------------------------------------------
+qs = cgi.FieldStorage()
+parseCommandLine(qs)
+if qs.has_key("timeseries"):
+  complain("Module not availible")
+elif qs.has_key("catalog"):
+  site_catalog(qs["catalog"].value);
+elif qs.has_key("tscatalog"):
+  print json.dumps(ts_catalog(qs["tscatalog"].value),sort_keys= True,indent=3)
+elif qs.has_key("query"):
+  query(qs["query"].value);
+else:
+  complain("No Parameters Given!")
