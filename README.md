@@ -2,7 +2,7 @@ hydroJSON
 =========
 
 ## Synopsis
-A JSON based standard for interchanging hydro, meteorological and environmental data. The main goal of this standard is to have a common way of interchanging  and using HydroMet data via webservices. Given the ease with importing JSON formatted objects programattically, this standard has use cases in modeling as well.
+A JSON based standard for interchanging hydro, meteorological and environmental data. The main goal of this standard is to have a common way of interchanging  and using HydroMet data via web services. Given the ease with importing JSON formatted objects programmatically, this standard has use cases in modeling as well.
 
 ## Code Example
 
@@ -17,11 +17,11 @@ Show what the library does as concisely as possible, developers should be able t
 [/getjson?query=\["dwr flow"\]&backward=7d&time_format=%s](http://www.nwd-wc.usace.army.mil/dd/common/web_service/webexec/getjson?query=["dwr flow"]&backward=7d&time_format=%s )
 
 
-####List all availible timeseries names for a given site:
+####List all available timeseries names for a given site:
 
 [/getjson?tscatalog=\["GCL"\]](http://www.nwd-wc.usace.army.mil/dd/common/web_service/webexec/getjson?tscatalog=["GCL"])
 
-####All availble sites/Stations with metadata:
+####All available sites/Stations with metadata:
 
 [/getjson?catalog=\[\]](http://www.nwd-wc.usace.army.mil/dd/common/web_service/webexec/getjson?catalog=[])
 
