@@ -158,7 +158,7 @@ timeseries_template = {
   "end_timestamp":"" 
 }
 
-def new_timeseries(s, ts, time_format = "%Y-%m-%dT%H:%M:%S%z"):
+def new_timeseries(s, ts, conf = {}, dFamily = None ):
   '''This method fills out a site template
      input: s - rec object mapped to the seriescatalog table in the sqlite3 database
             ts - timeSeries Object   
@@ -171,6 +171,11 @@ def new_timeseries(s, ts, time_format = "%Y-%m-%dT%H:%M:%S%z"):
     except:
       return 0.0
   output = deepcopy(timeseries_template)
+  time_format = "%Y-%m-%dT%H:%M:%S%z"
+  if "time_format" in conf:
+    time_format = conf["time_format"]
+  if "tz_offset" in conf:
+    if conf["tz_offset"] != 0: ts = ts.timeshift(datetime.timedelta(hours=conf["tz_offset"]))
   _max = ts.data[0][1]
   _min = ts.data[0][1] 
   for slice in ts.data:
@@ -217,7 +222,8 @@ def readTS (tsid, start_time =None, end_time=None):
     for d in rows:
       row = [datetime.datetime.fromtimestamp(d[0])]
       row.append(d[1])
-      row.append(d[2])
+      #row.append(d[2])
+      row.append(0)
       ts.data.append(row)
   except Exception,e:
       status = "\nCould not read %s\n" % tsid
@@ -234,18 +240,24 @@ def writeTS (tsid,ts, replace_table = False):
   try:
     cur = dbconn.cursor()
     if replace_table == True:
-      cur.execute ("DROP TABLE "+tsid)
-    cur.execute ("CREATE TABLE IF NOT EXISTS "+tsid+"(DateTime INTEGER PRIMARY KEY, value FLOAT, flag NVARCHAR(16))")
+      try:
+        cur.execute ("DROP TABLE "+tsid)
+      except:
+        pass
+    cur.execute ("CREATE TABLE IF NOT EXISTS "+tsid+"(DateTime INTEGER PRIMARY KEY, value FLOAT)")#, flag INTEGER)")
     for line in ts.data:
-      sqltxt = "INSERT OR REPLACE INTO "+tsid+" VALUES(%d,%f,%s)" % (int(time.mktime(line[0].timetuple())),line[1],str(line[2]))
+      sqltxt = "INSERT OR REPLACE INTO "+tsid+" VALUES(%d,%f)" % (int(time.mktime(line[0].timetuple())),line[1])#,int(line[2]))
       cur.execute(sqltxt)
     dbconn.commit()
   except Exception, e:
     status = "\nCould not store "+tsid
     status += "\n%s" % str(e)
+    print status
   cur.close()
 
 def makeTablename (_tsid):
+  """Makes a tablename from supplied pathname"
+  """
   return"TS_"+hashlib.sha1(_tsid).hexdigest().upper()
 
 
@@ -291,7 +303,7 @@ class rec:
 
   def get_many (self, cursor, key, value):
     q = (value,)
-    cursor.execute("select "+self.tableColumns()+" from "+self.table+" where "+key+" = ?",q)
+    cursor.execute("select "+self.tableColumns()+" from "+self.table+" where "+key+" like ?",q)
     rows = cursor.fetchall()
     output = {}
     for line in rows:
@@ -539,18 +551,26 @@ class timeSeries:
       return timeSeries()
     return timeSeries(_data)
 
+  #This takes a relative time and turns it into a timedelta
+  #eg input 7d6h9m
   def parseTimedelta (self, input):
-    '''parseTimedelta takes a relative time and turns it into a timedelta
-    input format: 7d6h9m'''
     input = input.lower()
+    sign = 1
     output = datetime.timedelta(seconds = 0)
     t = ""
     try:
       for c in input:
-        if c =="w": 
-          output += datetime.timedelta(weeks=float(t))
+        if c == "-":
+          sign *= -1
+        elif c =="y":
+          output += datetime.timedelta(days=float(t)*365)
+          t = ""
+        elif c =="w":
+          output += datetime.timedelta(days=(float(t)*7))
+          t = ""
         elif c =="d":
           output += datetime.timedelta(days=float(t))
+          days = 0
           t = ""
         elif c =="h":
           output += datetime.timedelta(hours=float(t))
@@ -562,8 +582,8 @@ class timeSeries:
           if c != " ":
             t += c
     except:
-     self.status = "Could not parse"+input+" into a time interval"
-    return output
+      self.status = "Could not parse"+input+" into a time interval"
+    return output*sign
 
   def globalAverage (self):
     '''averages entire timeseries returns a timeslice'''
@@ -614,19 +634,22 @@ class timeSeries:
       self.status = str(e)
     return timeseries(_data)
 
-
- 
+def connect(dbpath):
+  global dbconn
+  global cur
+  try :
+    dbconn = sqlite3.connect(dbpath)
+    cur = dbconn.cursor()
+    if not dbconn :
+      status = "\nCould not connect to %s\n" % dbpath
+      status += "\n%s"
+  except Exception,e:
+    status = "\nCould not connect to %s\n" % dbpath
+    status += "\n%s"+str(e)
+  
 #---setup database connection
 dbconn = None
+cur = None
 status = "OK"
-try :
-  dbconn = sqlite3.connect(dbpath)
-  cur = dbconn.cursor()
-  if not dbconn :
-    status = "\nCould not connect to %s\n" % dbpath
-    status += "\n%s"
-except Exception,e:
-  status = "\nCould not connect to %s\n" % dbpath
-  status += "\n%s"+str(e)
-
+connect(dbpath)
 

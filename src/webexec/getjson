@@ -43,12 +43,20 @@ def ts_catalog(search_criteria):
    except:
      complain ("Malformed query")
      return output
-   if tokens == []: tokens = "['%']"
+   if tokens == []:
+     complain("Please be more descriptive")
+     return output
+   elif len(tokens[0]) < 3:
+     complain("Please be more descriptive")
+     return output
    site = hydro_lib.rec([],table="sitecatalog",keys=hydro_lib.schemas["sitecatalog"])
    series = hydro_lib.rec([],table="seriescatalog",keys=hydro_lib.schemas["seriescatalog"])
    for token in tokens: #loop through search criteria tokens and build response
      token = token.replace(" ","%")
      t = series.search(hydro_lib.cur, "name", "%"+token+"%")
+     sites = site.search(hydro_lib.cur, "description", "%"+token+"%")
+     for key in sites:
+       t.update (series.search(hydro_lib.cur, "name", "%"+sites[key]["siteid"]+"%"))
      for key in t:
        siteid = t[key]["siteid"]
        if siteid in output:
@@ -57,6 +65,8 @@ def ts_catalog(search_criteria):
          s = site.get(hydro_lib.cur,"siteid",siteid)
          output [siteid] = hydro_lib.new_site(s)
          output [siteid]["timeseries"][key] = {}
+         output [siteid]["time_format"] = config["time_format"]
+         output [siteid]["tz_offset"] = config["tz_offset"]
    return output   
 
 def query (search_criteria):
@@ -67,7 +77,7 @@ def query (search_criteria):
       s = series.get(hydro_lib.cur,"name",tsid)
       ts = hydro_lib.readTS(s["tablename"],config["startdt"],config["enddt"])
       if len(ts.data) > 0:
-        output[siteid]["timeseries"][tsid]= hydro_lib.new_timeseries(s,ts,time_format=config["time_format"])
+        output[siteid]["timeseries"][tsid]= hydro_lib.new_timeseries(s,ts,conf=config,dFamily=output[siteid]["responsibility"])
   print json.dumps(output,sort_keys= True,indent=3)
 
 #---------------------------------------------
@@ -83,19 +93,34 @@ def parseCommandLine(form):
       "forward" is the lookforward time from the end date, it modifies the end date after you manually set it.
       forward has the same formatting as "backward".
       "time_format" - change how the response date is formatted, using strftime formatting.
+      "tz_offset" - change the timezone offset on resultant data
   """
   global config
   ts=hydro_lib.timeSeries()
-  if "startdt" in form:
+  if "startdate" in form:
+    config["startdt"] = dateutil.parser.parse(form["startdate"].value)
+  elif "startdt" in form:
     config["startdt"] = dateutil.parser.parse(form["startdt"].value)
-  if "enddt" in form:
-    config["enddt"] = dateutil.parsedateutil.parser.parse(form["enddt"].value)
-  if "backward" in form:
+  elif "backward" in form:
     config["startdt"] = config["enddt"]- ts.parseTimedelta(form["backward"].value)
-  if "forward" in form:
+  if "enddate" in form:
+    config["enddt"] = dateutil.parser.parse(form["enddate"].value)
+  elif "enddt" in form:
+    config["enddt"] = dateutil.parser.parse(form["enddt"].value)
+  elif "forward" in form:
     config["enddt"] = config["enddt"]+ ts.parseTimedelta(form["forward"].value)
   if form.has_key("time_format"):
-    config["time_format"] = form["time_format"].value
+   config["time_format"] = form["time_format"].value
+  #=====Timezone offsets
+  config["tz_offset"]=-8
+  val = 0
+  if form.has_key("tz_offset"): val = form["tz_offset"].value
+  if form.has_key("tzoffset"): val = form["tz_offset"].value
+  if val != 0:
+    try:
+      config["tz_offset"]=float(val)
+    except:
+      pass
 
 #---------------------------------------------
 # "static void main();"
