@@ -8,7 +8,9 @@ config ={"startdt":datetime.datetime.now()-datetime.timedelta(days=1),
 "enddt":datetime.datetime.now(),
 "forward":"0d",
 "backward":"1d",
-"time_format": "%Y-%m-%dT%H:%M:%S%z"
+"time_format": "%Y-%m-%dT%H:%M:%S%z",
+"timezone":"PST",
+"tz_offset":-8 
 }
 
 def complain (e):
@@ -31,7 +33,7 @@ def site_catalog(search_criteria):
    for token in tokens:
      t = r.search(hydro_lib.cur, "siteid", token)
      for key in t:
-       output [key] = hydro_lib.new_site(t[key])
+       output [key] = hydro_lib.new_site(t[key],conf = config)
    print json.dumps(output,sort_keys= True,indent=3)
 
 def ts_catalog(search_criteria):
@@ -63,7 +65,7 @@ def ts_catalog(search_criteria):
          output [siteid]["timeseries"][key] = {}
        else:
          s = site.get(hydro_lib.cur,"siteid",siteid)
-         output [siteid] = hydro_lib.new_site(s)
+         output [siteid] = hydro_lib.new_site(s, conf = config)
          output [siteid]["timeseries"][key] = {}
          output [siteid]["time_format"] = config["time_format"]
          output [siteid]["tz_offset"] = config["tz_offset"]
@@ -94,6 +96,7 @@ def parseCommandLine(form):
       forward has the same formatting as "backward".
       "time_format" - change how the response date is formatted, using strftime formatting.
       "tz_offset" - change the timezone offset on resultant data
+      "timezone" - change the timezone and timezone offset on resultant data
   """
   global config
   ts=hydro_lib.timeSeries()
@@ -112,7 +115,6 @@ def parseCommandLine(form):
   if form.has_key("time_format"):
    config["time_format"] = form["time_format"].value
   #=====Timezone offsets
-  config["tz_offset"]=-8
   val = 0
   if form.has_key("tz_offset"): val = form["tz_offset"].value
   if form.has_key("tzoffset"): val = form["tz_offset"].value
@@ -121,6 +123,15 @@ def parseCommandLine(form):
       config["tz_offset"]=float(val)
     except:
       pass
+  #====Timezone
+  if "timezone" in form:
+    tzoffsets = {"PST":-8,"MST":-7,"CST":-6,"EST":-5,"GMT":0}
+    tz = form["timezone"].value
+    config ["timezone"] = tz
+    if tz in tzoffsets:
+      config["tz_offset"]=tzoffsets[tz]
+
+  
 
 #---------------------------------------------
 # "static void main();"

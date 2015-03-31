@@ -5,7 +5,7 @@
 
 import sys,os,time,datetime,json,atexit,sqlite3, hashlib
 from copy import deepcopy
-
+os.environ["TZ"]="GMT"
 dbpath = "../data/hydro.db"
 
 #---------------------------------------------------------------
@@ -109,7 +109,7 @@ site_template =  {
   "timeseries": {}
 }
 
-def new_site(s, time_format = "%Y-%m-%dT%H:%M:%S%z"):
+def new_site(s, conf = {}):
   '''This method fills out a site template
      input: rec object mapped to the sitecatalog table in the sqlite3 database
             time_format = strftime for ISO 8601
@@ -132,9 +132,14 @@ def new_site(s, time_format = "%Y-%m-%dT%H:%M:%S%z"):
   output ["elevation"]["method"] = s["elevation_method"]
   output ["timezone"] = s["timezone"]
   output ["tz_offset"] = s["tz_offset"]
-  output ["time_format"] = time_format
+  output ["time_format"] = conf["time_format"]
   output ["active_flag"] = s["active_flag"]
   output ["location_type"] = s["type"]
+  if "tz_offset" in conf:
+    output ["tz_offset"] = conf["tz_offset"]
+  if "timezone" in conf:
+    output ["timezone"] = conf["timezone"]
+
   return output 
     
 
