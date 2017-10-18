@@ -8,11 +8,11 @@ A JSON based standard for interchanging hydro, meteorological and environmental 
 
 #### Retrieve 7 days of flow from a dam
 
-[/getjson?query=\["dwr flow"\]&backward=7d&time\_format=%s](http://www.nwd-wc.usace.army.mil/dd/common/web\_service/webexec/getjson?query=%5B%22dwr%20flow%22%5D%26backward%3D7d "Get last 7 Days of data")
+[/getjson?query=\["dwr flow"\]&backward=7d](http://www.nwd-wc.usace.army.mil/dd/common/web\_service/webexec/getjson?query=%5B"dwr%20flow"%5D&backward=7d "Get last 7 Days of data")
 
 #### Format time to be seconds past the epoch for use in client side plotting
 
-[/getjson?query=\["dwr flow"\]&backward=7d&time\_format=%s](http://www.nwd-wc.usace.army.mil/dd/common/web\_service/webexec/getjson?query=%5B%22dwr%20flow%22%5D%26backward%3D7d%26time_format%3D%25s "Get last 7 Days of data")
+[/getjson?query=\["dwr flow"\]&backward=7d&time\_format=%s](http://www.nwd-wc.usace.army.mil/dd/common/web\_service/webexec/getjson?query=%5B"dwr%20flow"%5D&backward=7d&time_format=%s "Get last 7 Days of data")
 
 #### List all available timeseries names for a given site:
 
