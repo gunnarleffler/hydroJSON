@@ -18,6 +18,7 @@ Hashes will be on contents of timeseries value array.
 
 Timeseries Query
 --
+```
 {
   "timeseries" : [["tsid1","units1","interval1"], ["tsid2","units2","interval2"], ["tsid3","units3","interval3"]],
   "startdt":"ISO-8601",
@@ -26,6 +27,7 @@ Timeseries Query
   "back": "ISO-8601", //referenced from enddt, or datetime.now() if nothing specified
   "query" : ["BON Flow", "12340000 03065", "BIGI QD"]
 }
+```
 
 getjson?timeseries=[["CHJ Q","cfs","Daily"], ["CHJ.Flow.Inst.1Day.0.CBT-REV","kcfs"], ["12437990 00060","cfs"]]
 

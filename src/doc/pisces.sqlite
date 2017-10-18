@@ -1,0 +1,90 @@
+BEGIN TRANSACTION;
+
+CREATE TABLE piscesinfo (
+ name  NVARCHAR(256)  NOT NULL PRIMARY KEY,
+ value NVARCHAR(1024) NOT NULL DEFAULT ''
+);
+INSERT INTO piscesinfo VALUES( 'FileVersion',   2 );
+INSERT INTO piscesinfo VALUES( 'UnixDateTime', 'True' );
+
+CREATE TABLE quality_limit (
+  tablemask NVARCHAR(100)  NOT NULL PRIMARY KEY,
+  high      FLOAT              NULL DEFAULT NULL,
+  low       FLOAT              NULL DEFAULT NULL,
+  change    FLOAT              NULL DEFAULT NULL
+);
+
+CREATE TABLE scenario (
+  sortorder INT            NOT NULL DEFAULT 0  PRIMARY KEY,
+  name      NVARCHAR(200)  NOT NULL DEFAULT '',
+  path      NVARCHAR(1024) NOT NULL DEFAULT '',
+  checked   SMALLINT       NOT NULL DEFAULT 0
+);
+
+CREATE TABLE seriescatalog (
+  id               INTEGER,
+  parentid         INT            NOT NULL DEFAULT 1,
+  isfolder         SMALLINT       NOT NULL DEFAULT 0,
+  sortorder        INT            NOT NULL DEFAULT 0,
+  iconname         NVARCHAR(100)  NOT NULL DEFAULT '',
+  name             NVARCHAR(200)  NOT NULL DEFAULT '' PRIMARY KEY,
+  siteid           NVARCHAR(2600) NOT NULL DEFAULT '',
+  units            NVARCHAR(100)  NOT NULL DEFAULT '',
+  timeinterval     NVARCHAR(100)  NOT NULL DEFAULT 'irregular',
+  parameter        NVARCHAR(100)  NOT NULL DEFAULT '',
+  tablename        NVARCHAR(128)  NOT NULL DEFAULT '',
+  provider         NVARCHAR(200)  NOT NULL DEFAULT '',
+  connectionstring NVARCHAR(2600) NOT NULL DEFAULT '',
+  expression       NVARCHAR(2048) NOT NULL DEFAULT '',
+  notes            NVARCHAR(2048) NOT NULL DEFAULT '',
+  enabled          SMALLINT       NOT NULL DEFAULT 1
+);
+
+INSERT INTO seriescatalog VALUES( 1, 1, 1, 0, '', 'Untitled', '', '', '', '',
+                                  '', '', '', '', '', 0 );
+INSERT INTO seriescatalog VALUES( 2, 1, 0, 1, '', 'test_series', '', '',
+                                  'Irregular', '', 'test_series', 'Series',
+                                  '', '', '', 1 );
+
+CREATE TABLE seriesproperties (
+  id       INT            NOT NULL PRIMARY KEY,
+  seriesid INT            NOT NULL DEFAULT 0,
+  name     NVARCHAR(1024) NOT NULL DEFAULT '',
+  value    NVARCHAR(10)   NOT NULL DEFAULT ''
+);
+
+CREATE TABLE sitecatalog (
+  siteid            NVARCHAR(256)  NOT NULL PRIMARY KEY,
+  description       NVARCHAR(1024) NOT NULL DEFAULT '',
+  state             NVARCHAR(30)   NOT NULL DEFAULT '',
+  latitude          NVARCHAR(30)   NOT NULL DEFAULT '',
+  longitude         NVARCHAR(30)   NOT NULL DEFAULT '',
+  elevation         NVARCHAR(30)   NOT NULL DEFAULT '',
+  timezone          NVARCHAR(30)   NOT NULL DEFAULT '',
+  install           NVARCHAR(30)   NOT NULL DEFAULT '' ,
+  horizontal_datum  NVARCHAR(30)   NOT NULL DEFAULT '',
+  vertical_datum    NVARCHAR(30)   NOT NULL DEFAULT '',
+  vertical_accuracy FLOAT          NOT NULL DEFAULT 0,
+  elevation_method  NVARCHAR(100)  NOT NULL DEFAULT '',
+  tz_offset         NVARCHAR(10)   NOT NULL DEFAULT '',
+  active_flag       NVARCHAR(1)    NOT NULL DEFAULT 'T',
+  type              NVARCHAR(100)  NOT NULL DEFAULT '',
+  responsibility    NVARCHAR(30)   NOT NULL DEFAULT ''
+);
+
+CREATE TABLE siteproperties (
+  id     INT            NOT NULL PRIMARY KEY,
+  siteid NVARCHAR(256)  NOT NULL DEFAULT '' ,
+  name   NVARCHAR(1024) NOT NULL DEFAULT '',
+  value  NVARCHAR(10)   NOT NULL DEFAULT ''
+);
+
+CREATE TABLE test_series(
+  datetime DATETIME PRIMARY KEY,
+  value    FLOAT,
+  flag     INTEGER
+);
+
+CREATE UNIQUE INDEX id ON seriescatalog( name );
+
+COMMIT;
