@@ -17,11 +17,11 @@ A JSON based standard for interchanging hydro, meteorological and environmental 
 
 #### List all available timeseries names for a given site:
 
-[/getjson?tscatalog=\["GCL"\]](http://www.nwd-wc.usace.army.mil/dd/common/web\_service/webexec/getjson?tscatalog=["GCL"])
+[/getjson?tscatalog=\["GCL"\]]: http://www.nwd-wc.usace.army.mil/dd/common/web_service/webexec/getjson?tscatalog=["GCL"]
 
 #### All available sites/Stations with metadata:
 
-[/getjson?catalog=\[\]](http://www.nwd-wc.usace.army.mil/dd/common/web\_service/webexec/getjson?catalog=[])
+[/getjson?catalog=\[\]]: http://www.nwd-wc.usace.army.mil/dd/common/web_service/webexec/getjson?catalog=[]
 
 
 ## Motivation
@@ -60,7 +60,7 @@ General abstract queries allow the end user to provide keywords. The service wil
 
 `getjson?mostrecent=[["12437990",  "cfs"]]`
 
-[Database Description](doc/database_structure.md)
+[Database Description](doc/DBSCHEMA.md)
 
 
 ## Tests
