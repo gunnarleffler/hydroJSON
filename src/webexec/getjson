@@ -1,150 +1,210 @@
 #!/usr/local/bin/python
-import sys,os,json,csv,cgi,urllib,datetime,cgitb;cgitb.enable()
-import dateutil.parser
-import hydro_lib
-print "Content-Type: text/plain\n\n"
-
-config ={"startdt":datetime.datetime.now()-datetime.timedelta(days=1),
-"enddt":datetime.datetime.now(),
-"forward":"0d",
-"backward":"1d",
-"time_format": "%Y-%m-%dT%H:%M:%S%z",
-"timezone":"PST",
-"tz_offset":-8 
+import cgi, cgitb, datetime, dateutil.parser, hydro_lib, json, os, sys, urllib
+#cgitb.enable()
+config = {
+    "startdt": datetime.datetime.now() - datetime.timedelta(days=1),
+    "enddt": datetime.datetime.now(),
+    "forward": "0d",
+    "backward": "1d",
+    "time_format": "%Y-%m-%dT%H:%M:%S%z",
+    "timezone": "PST",
+    "midnight": False,
+    "tz_offset": -8
 }
 
-def complain (e):
-  print '{\n"error":"'+e+'"\n}'
+###############################################################################
 
-#-----------------------------------------------
-# catalog 
-#-----------------------------------------------
+
+def complain(e):
+  print '{\n"error":"' + e + '"\n}'
+
+
+###############################################################################
+# Return a catalog of sites (locations) only
+
 
 def site_catalog(search_criteria):
-   output = {}
-   tokens = []
-   try:
-     tokens = json.loads(urllib.unquote(search_criteria))
-   except:
-     complain ("Malformed query")
-     return
-   if tokens == []: tokens = "['%']"
-   r = hydro_lib.rec([],table="sitecatalog",keys=hydro_lib.schemas["sitecatalog"])
-   for token in tokens:
-     t = r.search(hydro_lib.cur, "siteid", token)
-     for key in t:
-       output [key] = hydro_lib.new_site(t[key],conf = config)
-   print json.dumps(output,sort_keys= True,indent=3)
+  output = {}
+  tokens = []
+  try:
+    tokens = json.loads(urllib.unquote(search_criteria))
+  except:
+    complain("Malformed query")
+    return
+  if tokens == []:
+    tokens = "['%']"
+  r = hydro_lib.rec(
+      [], table="sitecatalog", keys=hydro_lib.schemas["sitecatalog"])
+  for token in tokens:
+    t = r.search(hydro_lib.cur, "siteid", token)
+    for key in t:
+      output[key] = hydro_lib.new_site(t[key], conf=config)
+  return output
+
+
+###############################################################################
+# Return a catalog of sites and timeseries names
+
 
 def ts_catalog(search_criteria):
-   '''This builds out a response consisting of sites and timeseries names'''
-   output = {}
-   tokens = []
-   try:
-     tokens = json.loads(urllib.unquote(search_criteria))
-   except:
-     complain ("Malformed query")
-     return output
-   if tokens == []:
-     complain("Please be more descriptive")
-     return output
-   elif len(tokens[0]) < 3:
-     complain("Please be more descriptive")
-     return output
-   site = hydro_lib.rec([],table="sitecatalog",keys=hydro_lib.schemas["sitecatalog"])
-   series = hydro_lib.rec([],table="seriescatalog",keys=hydro_lib.schemas["seriescatalog"])
-   for token in tokens: #loop through search criteria tokens and build response
-     token = token.replace(" ","%")
-     t = series.search(hydro_lib.cur, "name", "%"+token+"%")
-     sites = site.search(hydro_lib.cur, "description", "%"+token+"%")
-     for key in sites:
-       t.update (series.search(hydro_lib.cur, "name", "%"+sites[key]["siteid"]+"%"))
-     for key in t:
-       siteid = t[key]["siteid"]
-       if siteid in output:
-         output [siteid]["timeseries"][key] = {}
-       else:
-         s = site.get(hydro_lib.cur,"siteid",siteid)
-         output [siteid] = hydro_lib.new_site(s, conf = config)
-         output [siteid]["timeseries"][key] = {}
-         output [siteid]["time_format"] = config["time_format"]
-         output [siteid]["tz_offset"] = config["tz_offset"]
-   return output   
+  output = {}
+  tokens = []
+  try:
+    tokens = json.loads(urllib.unquote(search_criteria))
+  except:
+    complain("Malformed query")
+    return output
+  if tokens == []:
+    complain("Please be more descriptive")
+    return output
+  elif len(tokens[0]) < 3:
+    complain("Please be more descriptive")
+    return output
+  site = hydro_lib.rec(
+      [], table="sitecatalog", keys=hydro_lib.schemas["sitecatalog"])
+  series = hydro_lib.rec(
+      [], table="seriescatalog", keys=hydro_lib.schemas["seriescatalog"])
 
-def query (search_criteria):
-  output = ts_catalog (search_criteria)
-  series = hydro_lib.rec([],table="seriescatalog",keys=hydro_lib.schemas["seriescatalog"])
+  # loop through search criteria tokens and build response
+
+  for token in tokens:
+    token = token.replace(" ", "%")
+    t = series.search(hydro_lib.cur, "name", "%" + token + "%")
+    sites = site.search(hydro_lib.cur, "description", "%" + token + "%")
+    for key in sites:
+      t.update(series.search(hydro_lib.cur, "name", sites[key]["siteid"] + "%"))
+    for key in t:
+      siteid = t[key]["siteid"]
+      if siteid in output:
+        output[siteid]["timeseries"][key] = {"notes":t[key]["notes"]}
+      else:
+        s = site.get(hydro_lib.cur, "siteid", siteid)
+        output[siteid] = hydro_lib.new_site(s, conf=config)
+        output[siteid]["timeseries"][key] = {"notes":t[key]["notes"]}
+        output[siteid]["time_format"] = config["time_format"]
+        output[siteid]["tz_offset"] = config["tz_offset"]
+  return output
+
+
+###############################################################################
+
+
+def query(search_criteria):
+  output = ts_catalog(search_criteria)
+  series = hydro_lib.rec(
+      [], table="seriescatalog", keys=hydro_lib.schemas["seriescatalog"])
   for siteid in output:
     for tsid in output[siteid]["timeseries"]:
-      s = series.get(hydro_lib.cur,"name",tsid)
-      ts = hydro_lib.readTS(s["tablename"],config["startdt"],config["enddt"])
-      if len(ts.data) > 0:
-        output[siteid]["timeseries"][tsid]= hydro_lib.new_timeseries(s,ts,conf=config,dFamily=output[siteid]["responsibility"])
-  print json.dumps(output,sort_keys= True,indent=3)
+      s = series.get(hydro_lib.cur, "name", tsid)
+      ts = hydro_lib.readTS(
+          s["tablename"],
+          config["startdt"],
+          config["enddt"],
+          timezone=config['timezone'])
+      # date filter
 
-#---------------------------------------------
+      if "fed" in config and "fsd" in config:
+        tdata = []
+        for t in ts.data:
+          jday = t[0].timetuple().tm_yday
+          if jday >= config["fsd"] and jday <= config["fed"]:
+            tdata.append(t)
+        ts.data = tdata
+
+      # add ts to datastructure
+
+      if len(ts.data) > 0:
+        output[siteid]["timeseries"][tsid] = hydro_lib.new_timeseries(
+            s, ts, conf=config, dFamily=output[siteid]["responsibility"])
+  return output
+
+
+###############################################################################
 # Parse Command-line Options
-#---------------------------------------------
+#
+# Takes a form object, adjusts default settings based on url parameters:
+#
+#         "enddt" endtime   (defaults to now()
+#       "startdt" starttime (defaults to now()-1d)
+#      "backward" lookback from endtime, modifies starttime (format:1w2d3h4m)
+#       "forward" lookforward from endtime, modifies endtime (format:1w2d3h4m)
+#   "time_format" response date formatting (uses strftime specification)
+#     "tz_offset" timezone offset on resultant data
+#      "timezone" timezone and timezone offset on resultant data
+#   "filterstart" filter values returned by day in year
+#   "filterend"       (e.g. Apr 1 thru Apr 30)
+#      "midnight" specifying this parameter causes midnight values to be displayed as 2400
+
+
 
 def parseCommandLine(form):
-  """ This method takes a form object and adjusts default setting based on what are passed as url parameters.
-      The scheme for look forwards and look backwards are referenced the end date which can be specified.
-      "enddt" is the endtime and defaults to now(), you can set it using any (valid) time format you wish
-      "startdt" is the starttime and defaults to now()-1d, you can set it using any (valid) time format you wish
-      "backward" is the lookback time from the end date, it modifies the startdate (format:1w2d3h4m)
-      "forward" is the lookforward time from the end date, it modifies the end date after you manually set it.
-      forward has the same formatting as "backward".
-      "time_format" - change how the response date is formatted, using strftime formatting.
-      "tz_offset" - change the timezone offset on resultant data
-      "timezone" - change the timezone and timezone offset on resultant data
-  """
   global config
-  ts=hydro_lib.timeSeries()
+  ts = hydro_lib.timeSeries()
+
   if "startdate" in form:
     config["startdt"] = dateutil.parser.parse(form["startdate"].value)
   elif "startdt" in form:
     config["startdt"] = dateutil.parser.parse(form["startdt"].value)
   elif "backward" in form:
-    config["startdt"] = config["enddt"]- ts.parseTimedelta(form["backward"].value)
+    config["startdt"] = (
+        config["enddt"] - ts.parseTimedelta(form["backward"].value))
+
   if "enddate" in form:
     config["enddt"] = dateutil.parser.parse(form["enddate"].value)
   elif "enddt" in form:
     config["enddt"] = dateutil.parser.parse(form["enddt"].value)
   elif "forward" in form:
-    config["enddt"] = config["enddt"]+ ts.parseTimedelta(form["forward"].value)
-  if form.has_key("time_format"):
-   config["time_format"] = form["time_format"].value
-  #=====Timezone offsets
+    config["enddt"] = (
+        config["enddt"] + ts.parseTimedelta(form["forward"].value))
+
+  if "time_format" in form:
+    config["time_format"] = form["time_format"].value
+
+  if "midnight" in form:
+    config["midnight"] = True
+
+  if "filterstart" in form and "filterend" in form:
+    config["fsd"] = dateutil.parser.parse(
+        form["filterstart"].value).timetuple().tm_yday
+    config["fed"] = dateutil.parser.parse(
+        form["filterend"].value).timetuple().tm_yday
+
   val = 0
-  if form.has_key("tz_offset"): val = form["tz_offset"].value
-  if form.has_key("tzoffset"): val = form["tz_offset"].value
+  if "tz_offset" in form:
+    val = form["tz_offset"].value
   if val != 0:
     try:
-      config["tz_offset"]=float(val)
+      config["tz_offset"] = float(val)
     except:
       pass
-  #====Timezone
+
   if "timezone" in form:
-    tzoffsets = {"PST":-8,"MST":-7,"CST":-6,"EST":-5,"GMT":0}
+    tzoffsets = {"PST": -8, "MST": -7, "CST": -6, "EST": -5, "GMT": 0}
     tz = form["timezone"].value
-    config ["timezone"] = tz
+    config["timezone"] = tz
     if tz in tzoffsets:
-      config["tz_offset"]=tzoffsets[tz]
+      config["tz_offset"] = tzoffsets[tz]
 
-  
 
-#---------------------------------------------
-# "static void main();"
-#---------------------------------------------
+###############################################################################
+###############################################################################
+
 qs = cgi.FieldStorage()
-parseCommandLine(qs)
-if qs.has_key("timeseries"):
-  complain("Module not availible")
-elif qs.has_key("catalog"):
-  site_catalog(qs["catalog"].value);
-elif qs.has_key("tscatalog"):
-  print json.dumps(ts_catalog(qs["tscatalog"].value),sort_keys= True,indent=3)
-elif qs.has_key("query"):
-  query(qs["query"].value);
+
+print "Content-Type: text/plain\n\n"
+try:
+  parseCommandLine(qs)
+except:
+  print '{"Error":"Invalid Request"}'
+
+result = []
+if "catalog" in qs:
+  result = site_catalog(qs["catalog"].value)
+elif "tscatalog" in qs:
+  result = ts_catalog(qs["tscatalog"].value)
+elif "query" in qs:
+  result = query(qs["query"].value)
 else:
   complain("No Parameters Given!")
+
+print json.dumps(result, sort_keys=True, indent=3)
