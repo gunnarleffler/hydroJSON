@@ -5,65 +5,7 @@ from copy import deepcopy
 
 os.environ["TZ"] = "GMT"
 
-defaultUnits = {
-    "%": "%",
-    "airtemp": "F",
-    "area": "ft2",
-    "area-basin": "mi2",
-    "area-impacted": "acre",
-    "area-reservoir": "acre",
-    "area-surface": "acre",
-    "ati-cold": "degF-day",
-    "ati-melt": "degF-day",
-    "code": "n/a",
-    "coeff": "n/a",
-    "cold content": "in",
-    "conc": "ppm",
-    "conc-salinity": "g/l",
-    "cond": "umho/cm",
-    "count": "unit",
-    "currency": "$",
-    "density": "lbs/ft3",
-    "depth": "ft",
-    "depth-swe": "in",
-    "dir": "deg",
-    "dist": "mi",
-    "elev": "ft",
-    "energy": "MWh",
-    "evap": "in",
-    "evaprate": "in/day",
-    "fish": "unit",
-    "flow": "kcfs",
-    "frost": "in",
-    "growthrate": "in/day",
-    "head": "ft",
-    "interception": "in",
-    "irrad": "langley/min",
-    "liquid water": "in",
-    "lwass": "in",
-    "opening": "ft",
-    "ph": "su",
-    "power": "MW",
-    "precip": "in",
-    "pres": "mm-hg",
-    "rad": "langley",
-    "ratio": "n/a",
-    "speed": "mph",
-    "spinrate": "rpm",
-    "stage": "ft",
-    "stor": "kaf",
-    "swe": "in",
-    "temp": "F",
-    "thick": "in",
-    "timing": "sec",
-    "travel": "mi",
-    "turb": "jtu",
-    "turbf": "fnu",
-    "turbj": "jtu",
-    "turbn": "ntu",
-    "volt": "volt",
-    "volume": "kaf"
-}
+defaultUnits = {}
 
 ###############################################################################
 # SQLite3 database schema
@@ -162,7 +104,9 @@ def strftime(dt, fmt, usemidnight=False):
 #  output: nested dictionary
 
 
-def new_timeseries(s, ts, conf={}, dFamily=None):
+def new_timeseries(s, ts, conf={}):
+  if len(ts.data) == 0:
+    return {}
 
   output = {
       "values": [],
@@ -191,7 +135,7 @@ def new_timeseries(s, ts, conf={}, dFamily=None):
   output["site_quality"] = []
   output["sigfig"] = 3
   output["notes"] = s["notes"]
-  output["quality_type"] = "string"
+  output["quality_type"] = "int"
   output["parameter"] = s["parameter"]
   output["active_flag"] = s["enabled"]
   output["duration"] = s["duration"]
@@ -222,7 +166,7 @@ def new_timeseries(s, ts, conf={}, dFamily=None):
 ###############################################################################
 
 
-def readTS(tsid, start_time=None, end_time=None, timezone=None):
+def readTS(tsid, start_time=None, end_time=None, units="default", timezone=None):
   global status
   cur = dbconn.cursor()
   ts = timeSeries()
@@ -272,8 +216,8 @@ def writeTS(tsid, ts, replace_table=False):
     execute(sqltxt)
   dbconn.commit()
   cur.close()
-  if status != "":
-    print status
+  #if status != "":
+  #  print status
   return ("\n".join(output))
 
 
@@ -473,6 +417,37 @@ class timeseries:
       self.status = str(e)
     return timeSeries(_data)
 
+  def accumulate(self, interval, override_startTime=None):
+    '''accumulates timeseries based on a given interval of type timedelta
+     returns a timeseries object'''
+    _data = []
+    if self.data == []:
+      return timeseries()
+    try:
+      i = 0
+      count = len(self.data)
+      if override_startTime != None:
+        endTime = override_startTime
+      else:
+        endTime = self.data[i][0]
+      while i < count:
+        startTime = endTime
+        endTime = startTime + interval
+        quality = self.data[i][2]
+        n = 0
+        sum = 0
+        while self.data[i][0] < endTime:
+          sum += self.data[i][1]
+          n += 1
+          i += 1
+          if i >= count:
+            break
+        if n != 0:
+          _data.append([endTime, sum, quality])
+    except Exception, e:
+      self.status = str(e)
+    return timeseries(_data)
+
   # averages timeseries based on a given interval of type timedelta
   # returns a timeseries object
 
@@ -573,7 +548,7 @@ class timeseries:
     return timeSeries(_data)
 
   def snap(self, interval, buffer, starttime=None):
-    ''' Snaps a timeseries 
+    ''' Snaps a timeseries
         interval: interval at which time series is snapped
         buffer : lookahead and lookback
         returns a snapped timeseries '''
@@ -746,13 +721,39 @@ class timeseries:
     return timeseries(_data)
 
 
-timeSeries = timeseries
+def getDefaultUnits(tsid, dFamily):
+  """ Return default display units for a given pathname.
+   input:   tsid - CWMS pathname
+         dFamily - Class of display units, defaults
+  """
+  if dFamily not in defaultUnits:
+    dFamily = "default"
+  try:
+    tsid = tsid.lower()
+    tokens = tsid.split(".")
 
+    # check to see if full Parameter is in default units and return
+    param = tokens[1]
+    if param in defaultUnits[dFamily]:
+      return defaultUnits[dFamily][param]
+
+    # check to see if parameter is in default units and return
+    param = tokens[1].split("-")[0]
+    if param in defaultUnits[dFamily]:
+      return defaultUnits[dFamily][param]
+  except:
+    pass
+
+  return ""  # Use database default
+
+timeSeries = timeseries
 
 def connect(dbpath):
   global dbconn
   global cur
   try:
+    config = json.load(open("../config/config.json","r"))
+    defaultUnits = config.get("units",{})
     dbconn = sqlite3.connect(dbpath)
     cur = dbconn.cursor()
     if not dbconn:

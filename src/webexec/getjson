@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 import cgi, cgitb, datetime, dateutil.parser, hydro_lib, json, os, sys, urllib
-#cgitb.enable()
+cgitb.enable()
 config = {
     "startdt": datetime.datetime.now() - datetime.timedelta(days=1),
     "enddt": datetime.datetime.now(),
@@ -76,11 +76,11 @@ def ts_catalog(search_criteria):
     for key in t:
       siteid = t[key]["siteid"]
       if siteid in output:
-        output[siteid]["timeseries"][key] = {"notes":t[key]["notes"]}
+        output[siteid]["timeseries"][key] = {"notes": t[key]["notes"]}
       else:
         s = site.get(hydro_lib.cur, "siteid", siteid)
         output[siteid] = hydro_lib.new_site(s, conf=config)
-        output[siteid]["timeseries"][key] = {"notes":t[key]["notes"]}
+        output[siteid]["timeseries"][key] = {"notes": t[key]["notes"]}
         output[siteid]["time_format"] = config["time_format"]
         output[siteid]["tz_offset"] = config["tz_offset"]
   return output
@@ -96,11 +96,18 @@ def query(search_criteria):
   for siteid in output:
     for tsid in output[siteid]["timeseries"]:
       s = series.get(hydro_lib.cur, "name", tsid)
+      if s["units"].strip() == "" or s["units"] == "default":
+        s["units"] = hydro_lib.getDefaultUnits(s["name"],
+        output[siteid]["responsibility"])
+      if s["units"].strip() == "" or s["units"] == "default":
+        s["units"] = hydro_lib.getDefaultUnits(s["name"],
+        output[siteid]["responsibility"])
       ts = hydro_lib.readTS(
           s["tablename"],
           config["startdt"],
           config["enddt"],
-          timezone=config['timezone'])
+          units=s["units"],
+          timezone=config["timezone"])
       # date filter
 
       if "fed" in config and "fsd" in config:
@@ -115,7 +122,7 @@ def query(search_criteria):
 
       if len(ts.data) > 0:
         output[siteid]["timeseries"][tsid] = hydro_lib.new_timeseries(
-            s, ts, conf=config, dFamily=output[siteid]["responsibility"])
+            s, ts, conf=config)
   return output
 
 
@@ -134,7 +141,6 @@ def query(search_criteria):
 #   "filterstart" filter values returned by day in year
 #   "filterend"       (e.g. Apr 1 thru Apr 30)
 #      "midnight" specifying this parameter causes midnight values to be displayed as 2400
-
 
 
 def parseCommandLine(form):
@@ -184,6 +190,9 @@ def parseCommandLine(form):
     config["timezone"] = tz
     if tz in tzoffsets:
       config["tz_offset"] = tzoffsets[tz]
+
+  config["enddt"] -= datetime.timedelta(hours=config["tz_offset"])
+  config["startdt"] -= datetime.timedelta(hours=config["tz_offset"])
 
 
 ###############################################################################
